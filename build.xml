@@ -1,0 +1,13 @@
+<project name="massive-ironman">
+    <target name="flash-bluetooth">
+        <exec executable="/bin/sh">
+            <arg value="scripts/flash-bluetooth.sh"/>
+        </exec>
+    </target>
+
+    <target name="flash-usb">
+        <exec executable="/bin/sh">
+            <arg value="scripts/flash-usb.sh"/>
+        </exec>
+    </target>
+</project>
