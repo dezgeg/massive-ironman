@@ -5,6 +5,7 @@ import lejos.nxt.Sound;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 import lejos.nxt.comm.RConsole;
+import lejos.nxt.comm.USB;
 import lejos.robotics.navigation.DifferentialPilot;
 
 import java.io.DataInputStream;
@@ -31,9 +32,9 @@ public class Main {
         }
 
         while (true) {
-            System.out.println("Waiting for BT..");
-            NXTSocketUtils.setNXTConnection(Bluetooth.waitForConnection());
-            System.out.println("BT connected.");
+            System.out.println("Waiting for USB");
+            NXTSocketUtils.setNXTConnection(USB.waitForConnection());
+            System.out.println("USB connected.");
             Socket sock = new Socket("localhost", 9001);
 
             DataOutputStream dataOutputStream = new DataOutputStream(sock.getOutputStream());
@@ -41,13 +42,13 @@ public class Main {
 
             DifferentialPilot diffPilot = new DifferentialPilot(56.0f, 2200.0f, Motor.B, Motor.A);
             diffPilot.setTravelSpeed(diffPilot.getMaxTravelSpeed() / 3.0f);
+            diffPilot.setAcceleration((int)(diffPilot.getMaxTravelSpeed() * 3.0f));
             //noinspection InfiniteLoopStatement
             while (true) {
                 int b;
                 try {
                     b = dataInputStream.readUnsignedByte();
-                    System.out.println("Got byte: " + b);
-                } catch (EOFException e) {
+                } catch (Exception e) {
                     System.out.println("Disconnected.");
                     break;
                 }

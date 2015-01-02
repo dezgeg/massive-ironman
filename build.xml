@@ -10,4 +10,10 @@
             <arg value="scripts/flash-usb.sh"/>
         </exec>
     </target>
+
+    <target name="flash-ssh">
+        <exec executable="/bin/sh">
+            <arg value="scripts/flash-ssh.sh"/>
+        </exec>
+    </target>
 </project>
