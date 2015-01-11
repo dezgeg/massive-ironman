@@ -3,7 +3,7 @@
 
 Koirabotti seuraa webcamin avulla oranssia it-konferenssista saatua stressipalloa,
 tarttuu siihen kourilla,
-ja tuo sen lopuksi värillä merkittyyn lähtöpaikkaansa.
+ja tuo sen lopuksi vihreä värillä merkittyyn lähtöpaikkaansa.
 Seinien ja esteiden välttely ei kuulu koirabotin toimenkuvaan vaan silloin http://imgur.com/gallery/Dl6PLBd
 
 ![Yleiskuva](/docs/kuvat/yleiskuva.jpg "Yleiskuva")
