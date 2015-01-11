@@ -1,11 +1,8 @@
 import cv
 import cv2
-import socket
 import os
-import signal
 import sys
 import atexit
-import math
 import numpy
 
 RED = cv.Scalar(0, 0, 255, 0)
@@ -20,7 +17,7 @@ def nothing(x):
     pass
 
 
-if True:
+if '-t' not in sys.argv:
     if not os.path.exists("/tmp/nxt"):
         print "No named pipe"
         sys.exit(1)
@@ -43,10 +40,11 @@ cv2.createTrackbar('V_min', 'X', 40, 255, nothing)
 cv2.createTrackbar('H_max', 'X', 13, 255, nothing)
 cv2.createTrackbar('S_max', 'X', 255, 255, nothing)
 cv2.createTrackbar('V_max', 'X', 255, 255, nothing)
-cv2.createTrackbar('BallClose', 'X', 200, 255, nothing)
 
 numSeenFrames = 0
 paused = False
+trackTarget = 'ball' # either 'ball' or 'home'
+seekingHome = False
 
 tcpSocket.write('3')  # set power
 tcpSocket.write('-')  # open jaws
@@ -68,10 +66,16 @@ while True:
     sourceImage = cv2.flip(sourceImage, 0)
     sourceImage = cv2.flip(sourceImage, 1)
 
-    min_color = cv.Scalar(cv2.getTrackbarPos('H_min', 'X'),
+    if trackTarget == 'ball':
+        minHue = cv2.getTrackbarPos('H_min', 'X')
+        maxHue = cv2.getTrackbarPos('H_max', 'X')
+    else:
+        minHue = 44
+        maxHue = 54
+    min_color = cv.Scalar(minHue,
                           cv2.getTrackbarPos('S_min', 'X'),
                           cv2.getTrackbarPos('V_min', 'X'), 0)
-    max_color = cv.Scalar(cv2.getTrackbarPos('H_max', 'X'),
+    max_color = cv.Scalar(maxHue,
                           cv2.getTrackbarPos('S_max', 'X'),
                           cv2.getTrackbarPos('V_max', 'X'), 0)
 
@@ -127,15 +131,16 @@ while True:
 
     if paused:
         cv2.putText(thresholdImage, '-', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, RED, 2)
-    else:
+    elif not seekingHome:
         numSeenFrames += 1
         if numSeenFrames < 50:
             if ballPos is None:
                 numSeenFrames = 0
         else:
-            if ballPos is None:
-                tcpSocket.write("+")
-            print (numSeenFrames, ballPos, widthHeightSum)
+            if trackTarget == 'ball' and ballPos is None:
+                tcpSocket.write("+") # close jaws
+                trackTarget = 'home'
+                seekingHome = True
         # cv2.putText(thresholdImage, str(numSeenFrames), (200, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, BLUE, 2)
 
         # Send driving commands
@@ -145,6 +150,10 @@ while True:
             letter = chr(abs(steerDir) * 4 + ord('A') + (steerDir > 0))
             # cv2.putText(thresholdImage, letter, (100, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, BLUE, 2)
             tcpSocket.write(letter)
+    else:
+        tcpSocket.write('e') # turn right
+        if ballPos and widthHeightSum >= 150:
+            seekingHome = False
 
     resizeFactor = 0.75
     resizedThresholdImage = cv2.resize(thresholdImage, (int(width * resizeFactor), int(height * resizeFactor)))

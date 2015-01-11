@@ -1,5 +1,5 @@
 #!/bin/bash
-if ! [ -f /tmp/nxt ]; then
+if ! [ -p /tmp/nxt ]; then
     echo "No named pipe"
     exit 1
 fi
