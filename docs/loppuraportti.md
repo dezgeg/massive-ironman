@@ -125,3 +125,34 @@ Käynnistämällä leJOS-ohjelman ja ajamalla VNC:n yli `python2 opencv.py` (ilm
 
 Tämän testin tulos on kuvattu edellä linkatussa youtube-videossa, eli ihan onnistunut.
 Joskin vaatii useamman yrityksen, koska koura ei aina saa pallosta tarpeeksi hyvää otetta.
+
+# Rajoitukset
+
+Viimeistelyä ja hienosäätöä pitäisi olla enemmän:
+ - pitäisi laskea optimaalinen kääntymismäärä (`turnRate`) funktiona pallon x-koordinaatin suhteen, nykyinen malli on lähinnä hatusta heitetty
+ - värintunnistus kaipaisi automaattisia testejä / testidataa kuvina sopivien parametrien valintaan
+ - kouran sivuille tarvittaisiin joku rakennelma estämään pallon liukumisen pois kouran alta robotin pyöriessä paikallaan
+ - mekaaninen rakenne vaatisi paremman takapyörän sekä luultavasti renkaiden etäisyyksien mitoittamisen järkevästi kääntymisen parantamiseksi
+
+Myöskin ilmeisesti leJOS 0.9.1:ssä (mutta ei 0.9.0:ssa) servo-ohjauksessa näyttäisi olevan jotain bugeja silloin kun servojen pyöriminen estyy liikaa -
+esim. servon pysäytys muuttuu välillä mahdottomaksi
+
+# Käyttöohje
+leJOS-softan kääntö & flashaus voidaan tehdä devausläppärillä - IntelliJ IDEA:ssa 'Flash over SSH'-ajokonfiguraatio kääntää Java-koodin nxj-tiedostoksi,
+ajaa skriptin `scripts/flash-ssh.sh`, joka kopioi sen ssh:lla robotin miniläppäriin (kovakoodattu osoite `acer.dezgeg.me`) ja ajaa `nxjupload`:in myös ssh:n yli.
+
+Kun NXT-softa on käynnistetty, pitää robotin miniläppärillä käynnistää (esim. SSH:n yli) `nxjsocketproxy` skriptillä `scripts/proxy.sh`, joka putkittaa NXT:n usb-liikenteen
+`/tmp/nxt`-nimiseen named pipeen, johon muu koodi kirjoittaa.
+
+Tämän jälkeen voidaan käynnistää joko `scripts/console.sh` SSH:n yli tai `python2 opencv.py` VNC:n yli,
+jotka on selitetty testauskappaleessa.
+
+## OpenCV-kälin selitys
+![](/docs/kuvat/screenshot.jpg)
+
+- slidereillä säädetään oranssin värin tunnistamisen min/max-rajoja
+- punainen laatikko on tunnistetun kappaleen bounding box
+- punaisella oleva lukuarvo on bounding boxin koko (leveys + korkeus)
+- vihreä piste on tunnistetun kappaleen keskipiste
+- siniset + valkoiset pystyviivat ovat kääntymismäärän rajoja 
+- sininen lukuarvo on robotille annettava nykyinen kääntymismäärä
