@@ -1,35 +1,70 @@
-import lejos.nxt.Button;
-import lejos.nxt.ButtonListener;
-import lejos.nxt.Motor;
-import lejos.nxt.Sound;
-import lejos.nxt.comm.BTConnection;
-import lejos.nxt.comm.Bluetooth;
-import lejos.nxt.comm.RConsole;
+import lejos.nxt.*;
 import lejos.nxt.comm.USB;
 import lejos.robotics.navigation.DifferentialPilot;
+import lejos.robotics.navigation.Move;
+import lejos.robotics.navigation.MoveListener;
+import lejos.robotics.navigation.MoveProvider;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.NXTSocketUtils;
 import java.net.Socket;
 
 public class Main {
+    private static final int JAWS_OPEN = -30;
+    private static final int JAWS_CLOSED = -100;
+
+    private static NXTRegulatedMotor jawMotor = Motor.C;
+    private static ButtonListener stop = new ButtonListener() {
+        public void buttonPressed(Button b) {
+            System.exit(0);
+        }
+
+        public void buttonReleased(Button b) {
+
+        }
+    };
+
+    private static void resetJaws() {
+        jawMotor.setAcceleration((int)(jawMotor.getMaxSpeed() * 2.0f));
+        jawMotor.setStallThreshold(50, 100);
+        jawMotor.setSpeed(jawMotor.getMaxSpeed() / 2.0f);
+
+        jawMotor.forward();
+        //noinspection StatementWithEmptyBody
+        while (!jawMotor.isStalled()) {
+        }
+        jawMotor.stop();
+
+        jawMotor.resetTachoCount();
+        jawMotor.backward();
+        //noinspection StatementWithEmptyBody
+        while (jawMotor.getTachoCount() > JAWS_OPEN) {
+        }
+        jawMotor.stop();
+    }
+
+    private static void closeJaws() {
+        jawMotor.rotateTo(-115, true);
+    }
+
+    private static void openJaws() {
+        jawMotor.rotateTo(0, true);
+//        jawMotor.forward();
+//        //noinspection StatementWithEmptyBody
+//        while (jawMotor.getTachoCount() < JAWS_OPEN) {
+//            System.out.println(jawMotor.getTachoCount());
+//        }
+//        jawMotor.stop();
+//        jawMotor.flt(true);
+    }
+
     public static void main(String[] args) throws IOException {
-
-        ButtonListener stop = new ButtonListener() {
-            public void buttonPressed(Button b) {
-                System.exit(0);
-            }
-
-            public void buttonReleased(Button b) {
-
-            }
-        };
         for (Button button : Button.BUTTONS) {
             button.addButtonListener(stop);
         }
+        resetJaws();
 
         while (true) {
             System.out.println("Waiting for USB");
@@ -41,20 +76,30 @@ public class Main {
             DataInputStream dataInputStream = new DataInputStream(sock.getInputStream());
 
             DifferentialPilot diffPilot = new DifferentialPilot(56.0f, 2200.0f, Motor.B, Motor.A);
-            diffPilot.setTravelSpeed(diffPilot.getMaxTravelSpeed() / 3.0f);
-            diffPilot.setAcceleration((int)(diffPilot.getMaxTravelSpeed() * 3.0f));
+//            Motor.A.setStallThreshold(50000000, 100000);
+//            Motor.B.setStallThreshold(50000000, 100000);
+
+            double travelSpeed = diffPilot.getMaxTravelSpeed() / 3.0f;
+            diffPilot.setTravelSpeed(travelSpeed);
+            diffPilot.setAcceleration((int) (diffPilot.getMaxTravelSpeed() * 5.0f));
             //noinspection InfiniteLoopStatement
+            int num = 0;
             while (true) {
                 int b;
                 try {
                     b = dataInputStream.readUnsignedByte();
                 } catch (Exception e) {
+                    diffPilot.stop();
                     System.out.println("Disconnected.");
                     break;
                 }
+//                System.out.print(num++);
+//                System.out.print(' ');
+//                System.out.println((char) b);
                 switch (b) {
                     case ' ':
-                        diffPilot.stop();
+                        Motor.A.flt(true);
+                        Motor.B.flt(true);
                         break;
                     case ',':
                         diffPilot.forward();
@@ -63,29 +108,48 @@ public class Main {
                         diffPilot.backward();
                         break;
                     case 'a':
-                        diffPilot.rotateLeft();
+                        diffPilot.steer(200.0);
                         break;
                     case 'e':
-                        diffPilot.rotateRight();
+                        diffPilot.steer(-200.0);
                         break;
                     case 'q':
                         System.exit(0);
                         break;
                     case '1':
-                        diffPilot.setTravelSpeed(diffPilot.getMaxTravelSpeed() / 3.0f);
+                        travelSpeed = diffPilot.getMaxTravelSpeed() / 3.0f;
+                        diffPilot.setTravelSpeed(travelSpeed);
                         break;
                     case '2':
-                        diffPilot.setTravelSpeed(diffPilot.getMaxTravelSpeed() / 2.0f);
+                        travelSpeed = diffPilot.getMaxTravelSpeed() * 0.7f;
+                        diffPilot.setTravelSpeed(travelSpeed);
                         break;
                     case '3':
-                        diffPilot.setTravelSpeed(diffPilot.getMaxTravelSpeed() / 1.0f);
+                        travelSpeed = diffPilot.getMaxTravelSpeed() / 1.0f;
+                        diffPilot.setTravelSpeed(travelSpeed);
                         break;
                     case 'b':
                         Sound.beep();
-
                         break;
+                    case 'r':
+                        resetJaws();
+                        break;
+                    case '+':
+                        closeJaws();
+                        break;
+                    case '-':
+                        openJaws();
+                        break;
+                    default:
+                        if (b >= 'A' && b <= 'Z') {
+                            int n = b - 'A';
+                            int steer = n / 2;
+                            int sign = n % 2;
+                            diffPilot.steer(steer * 10 * (sign == 0 ? 1 : -1));
+                        }
                 }
             }
         }
     }
+
 }
