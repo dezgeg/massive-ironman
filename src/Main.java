@@ -1,9 +1,6 @@
 import lejos.nxt.*;
 import lejos.nxt.comm.USB;
 import lejos.robotics.navigation.DifferentialPilot;
-import lejos.robotics.navigation.Move;
-import lejos.robotics.navigation.MoveListener;
-import lejos.robotics.navigation.MoveProvider;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -13,7 +10,6 @@ import java.net.Socket;
 
 public class Main {
     private static final int JAWS_OPEN = -30;
-    private static final int JAWS_CLOSED = -100;
 
     private static NXTRegulatedMotor jawMotor = Motor.C;
     private static ButtonListener stop = new ButtonListener() {
@@ -51,13 +47,6 @@ public class Main {
 
     private static void openJaws() {
         jawMotor.rotateTo(0, true);
-//        jawMotor.forward();
-//        //noinspection StatementWithEmptyBody
-//        while (jawMotor.getTachoCount() < JAWS_OPEN) {
-//            System.out.println(jawMotor.getTachoCount());
-//        }
-//        jawMotor.stop();
-//        jawMotor.flt(true);
     }
 
     public static void main(String[] args) throws IOException {
@@ -72,7 +61,6 @@ public class Main {
             System.out.println("USB connected.");
             Socket sock = new Socket("localhost", 9001);
 
-            DataOutputStream dataOutputStream = new DataOutputStream(sock.getOutputStream());
             DataInputStream dataInputStream = new DataInputStream(sock.getInputStream());
 
             DifferentialPilot diffPilot = new DifferentialPilot(56.0f, 2200.0f, Motor.B, Motor.A);
