@@ -39,6 +39,7 @@ Erityisesti brickiä ei ole kiinnitetty mitenkään läppärin kanteen, vaan lei
 ![](/docs/kuvat/servot.jpg)
 ![](/docs/kuvat/lapileikkaus.jpg)
 ![](/docs/kuvat/takapyora.jpg)
+![](/docs/kuvat/pallokuva.jpg)
 
 ## Ohjelmisto
 
